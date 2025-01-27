@@ -54,6 +54,14 @@
 #define BSP_I2C_SCL           (GPIO_NUM_5)
 #define BSP_I2C_SDA           (GPIO_NUM_4)
 
+/* Audio */
+#define BSP_I2S_SCLK            (GPIO_NUM_39)
+#define BSP_I2S_MCLK            (GPIO_NUM_45)
+#define BSP_I2S_LCLK            (GPIO_NUM_41)
+#define BSP_I2S_DOUT            (GPIO_NUM_42)    // To Codec ES8311
+#define BSP_I2S_DSIN            (GPIO_NUM_40)   // From Codec ES8311
+#define BSP_POWER_AMP_IO        (GPIO_NUM_NC)
+
 /* Display */
 #define BSP_LCD_SPI_MOSI      (GPIO_NUM_47)
 #define BSP_LCD_SPI_CLK       (GPIO_NUM_21)
@@ -160,6 +168,63 @@ esp_err_t bsp_i2c_init(void);
 esp_err_t bsp_i2c_deinit(void);
 
 i2c_bus_handle_t bsp_i2c_get_handle(void);
+
+/**************************************************************************************************
+ *
+ * I2S audio interface
+ *
+ * There are two devices connected to the I2S peripheral:
+ *  - Codec ES8311 for output(playback) and input(recording) path
+ *
+ * For speaker initialization use bsp_audio_codec_speaker_init() which is inside initialize I2S with bsp_audio_init().
+ * For microphone initialization use bsp_audio_codec_microphone_init() which is inside initialize I2S with bsp_audio_init().
+ * After speaker or microphone initialization, use functions from esp_codec_dev for play/record audio.
+ * Example audio play:
+ * \code{.c}
+ * esp_codec_dev_set_out_vol(spk_codec_dev, DEFAULT_VOLUME);
+ * esp_codec_dev_open(spk_codec_dev, &fs);
+ * esp_codec_dev_write(spk_codec_dev, wav_bytes, bytes_read_from_spiffs);
+ * esp_codec_dev_close(spk_codec_dev);
+ * \endcode
+ **************************************************************************************************/
+
+/**
+ * @brief Init audio
+ *
+ * @note There is no deinit audio function. Users can free audio resources by calling i2s_del_channel()
+ * @warning The type of i2s_config param is depending on IDF version.
+ * @param[in]  i2s_config I2S configuration. Pass NULL to use default values (Mono, duplex, 16bit, 22050 Hz)
+ * @return
+ *      - ESP_OK                On success
+ *      - ESP_ERR_NOT_SUPPORTED The communication mode is not supported on the current chip
+ *      - ESP_ERR_INVALID_ARG   NULL pointer or invalid configuration
+ *      - ESP_ERR_NOT_FOUND     No available I2S channel found
+ *      - ESP_ERR_NO_MEM        No memory for storing the channel information
+ *      - ESP_ERR_INVALID_STATE This channel has not initialized or already started
+ */
+esp_err_t bsp_audio_init(const i2s_std_config_t *i2s_config);
+
+/**
+ * @brief Get codec I2S interface (initialized in bsp_audio_init)
+ *
+ * @return
+ *      - Pointer to codec I2S interface handle or NULL when error occurred
+ */
+const audio_codec_data_if_t *bsp_audio_get_codec_itf(void);
+
+/**
+ * @brief Initialize speaker codec device
+ *
+ * @return Pointer to codec device handle or NULL when error occurred
+ */
+esp_codec_dev_handle_t bsp_audio_codec_speaker_init(void);
+
+/**
+ * @brief Initialize microphone codec device
+ *
+ * @return Pointer to codec device handle or NULL when error occurred
+ */
+esp_codec_dev_handle_t bsp_audio_codec_microphone_init(void);
 
 /**************************************************************************************************
  *

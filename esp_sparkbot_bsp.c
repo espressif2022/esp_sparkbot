@@ -253,7 +253,7 @@ static lv_display_t *bsp_display_lcd_init(const bsp_display_cfg_t *cfg)
     esp_lcd_panel_io_handle_t io_handle = NULL;
     esp_lcd_panel_handle_t panel_handle = NULL;
     const bsp_display_config_t bsp_disp_cfg = {
-        .max_transfer_sz = cfg->trans_size ? (cfg->trans_size * sizeof(uint16_t)): (BSP_LCD_DRAW_BUFF_SIZE * sizeof(uint16_t)),
+        .max_transfer_sz = cfg->trans_size ? (cfg->trans_size * sizeof(uint16_t)) : (BSP_LCD_DRAW_BUFF_SIZE * sizeof(uint16_t)),
     };
     BSP_ERROR_CHECK_RETURN_NULL(bsp_display_new(&bsp_disp_cfg, &panel_handle, &io_handle));
 
@@ -407,7 +407,7 @@ void bsp_touch_button_create(touch_button_callback_t button_callback)
         };
         ESP_ERROR_CHECK(touch_button_create(&button_config, &button_handle[i]));
         ESP_ERROR_CHECK(touch_button_subscribe_event(button_handle[i],
-                                                    TOUCH_ELEM_EVENT_ON_PRESS | TOUCH_ELEM_EVENT_ON_RELEASE | TOUCH_ELEM_EVENT_ON_LONGPRESS,
+                                                     TOUCH_ELEM_EVENT_ON_PRESS | TOUCH_ELEM_EVENT_ON_RELEASE | TOUCH_ELEM_EVENT_ON_LONGPRESS,
                                                      (void *)channel_array[i]));
 #ifdef CONFIG_TOUCH_ELEM_EVENT
         ESP_ERROR_CHECK(touch_button_set_dispatch_method(button_handle[i], TOUCH_ELEM_DISP_EVENT));
@@ -425,4 +425,105 @@ void bsp_touch_button_create(touch_button_callback_t button_callback)
 
     touch_element_start();
     ESP_LOGI(TAG, "Touch element library start");
+}
+
+esp_codec_dev_handle_t bsp_audio_codec_speaker_init(void)
+{
+    const audio_codec_data_if_t *i2s_data_if = bsp_audio_get_codec_itf();
+    if (i2s_data_if == NULL) {
+        /* Initilize I2C */
+        ESP_ERROR_CHECK(bsp_i2c_init());
+        /* Configure I2S peripheral and Power Amplifier */
+        ESP_ERROR_CHECK(bsp_audio_init(NULL));
+        i2s_data_if = bsp_audio_get_codec_itf();
+    }
+    assert(i2s_data_if);
+
+    const audio_codec_gpio_if_t *gpio_if = audio_codec_new_gpio();
+
+    audio_codec_i2c_cfg_t i2c_cfg = {
+        .port = BSP_I2C_NUM,
+        .addr = ES8311_CODEC_DEFAULT_ADDR,
+    };
+    const audio_codec_ctrl_if_t *i2c_ctrl_if = audio_codec_new_i2c_ctrl(&i2c_cfg);
+    assert(i2c_ctrl_if);
+
+    esp_codec_dev_hw_gain_t gain = {
+        .pa_voltage = 5.0,
+        .codec_dac_voltage = 3.3,
+    };
+
+    es8311_codec_cfg_t es8311_cfg = {
+        .ctrl_if = i2c_ctrl_if,
+        .gpio_if = gpio_if,
+        .codec_mode = ESP_CODEC_DEV_TYPE_OUT,
+        .pa_pin = BSP_POWER_AMP_IO,
+        .pa_reverted = false,
+        .master_mode = false,
+        .use_mclk = true,
+        .digital_mic = false,
+        .invert_mclk = false,
+        .invert_sclk = false,
+        .hw_gain = gain,
+    };
+    const audio_codec_if_t *es8311_dev = es8311_codec_new(&es8311_cfg);
+    assert(es8311_dev);
+
+    esp_codec_dev_cfg_t codec_dev_cfg = {
+        .dev_type = ESP_CODEC_DEV_TYPE_IN_OUT,
+        .codec_if = es8311_dev,
+        .data_if = i2s_data_if,
+    };
+    return esp_codec_dev_new(&codec_dev_cfg);
+}
+
+esp_codec_dev_handle_t bsp_audio_codec_microphone_init(void)
+{
+    const audio_codec_data_if_t *i2s_data_if = bsp_audio_get_codec_itf();
+    if (i2s_data_if == NULL) {
+        /* Initilize I2C */
+        ESP_ERROR_CHECK(bsp_i2c_init());
+        /* Configure I2S peripheral and Power Amplifier */
+        ESP_ERROR_CHECK(bsp_audio_init(NULL));
+        i2s_data_if = bsp_audio_get_codec_itf();
+    }
+    assert(i2s_data_if);
+
+    const audio_codec_gpio_if_t *gpio_if = audio_codec_new_gpio();
+
+    audio_codec_i2c_cfg_t i2c_cfg = {
+        .port = BSP_I2C_NUM,
+        .addr = ES8311_CODEC_DEFAULT_ADDR,
+    };
+    const audio_codec_ctrl_if_t *i2c_ctrl_if = audio_codec_new_i2c_ctrl(&i2c_cfg);
+    assert(i2c_ctrl_if);
+
+    esp_codec_dev_hw_gain_t gain = {
+        .pa_voltage = 5.0,
+        .codec_dac_voltage = 3.3,
+    };
+
+    es8311_codec_cfg_t es8311_cfg = {
+        .ctrl_if = i2c_ctrl_if,
+        .gpio_if = gpio_if,
+        .codec_mode = ESP_CODEC_DEV_WORK_MODE_BOTH,
+        .pa_pin = BSP_POWER_AMP_IO,
+        .pa_reverted = false,
+        .master_mode = false,
+        .use_mclk = true,
+        .digital_mic = false,
+        .invert_mclk = false,
+        .invert_sclk = false,
+        .hw_gain = gain,
+    };
+
+    const audio_codec_if_t *es8311_dev = es8311_codec_new(&es8311_cfg);
+    assert(es8311_dev);
+
+    esp_codec_dev_cfg_t codec_es8311_dev_cfg = {
+        .dev_type = ESP_CODEC_DEV_TYPE_IN,
+        .codec_if = es8311_dev,
+        .data_if = i2s_data_if,
+    };
+    return esp_codec_dev_new(&codec_es8311_dev_cfg);
 }

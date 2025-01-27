@@ -3,7 +3,7 @@ name: Push components to Espressif Component Service
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   upload_components:
@@ -17,4 +17,4 @@ jobs:
         with:
           name: "esp_sparkbot"
           namespace: "espressif2022"
-          api_token: ${{secrets.COMPONENTS_TOKEN}}
+          api_token: ${{secrets.IDF_COMPONENT_API_TOKEN}}
