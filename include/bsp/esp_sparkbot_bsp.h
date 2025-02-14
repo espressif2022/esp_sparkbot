@@ -51,16 +51,16 @@
  **************************************************************************************************/
 
 /* I2C */
-#define BSP_I2C_SCL           (GPIO_NUM_5)
-#define BSP_I2C_SDA           (GPIO_NUM_4)
+#define BSP_I2C_SCL           (GPIO_NUM_1)
+#define BSP_I2C_SDA           (GPIO_NUM_2)
 
 /* Audio */
-#define BSP_I2S_SCLK            (GPIO_NUM_39)
-#define BSP_I2S_MCLK            (GPIO_NUM_45)
-#define BSP_I2S_LCLK            (GPIO_NUM_41)
-#define BSP_I2S_DOUT            (GPIO_NUM_42)    // To Codec ES8311
-#define BSP_I2S_DSIN            (GPIO_NUM_40)   // From Codec ES8311
-#define BSP_POWER_AMP_IO        (GPIO_NUM_NC)
+#define BSP_I2S_SCLK            (GPIO_NUM_16)
+#define BSP_I2S_MCLK            (GPIO_NUM_8)
+#define BSP_I2S_LCLK            (GPIO_NUM_17)
+#define BSP_I2S_DOUT            (GPIO_NUM_18)    // To Codec ES8311
+#define BSP_I2S_DSIN            (GPIO_NUM_15)   // From Codec ES8311
+#define BSP_POWER_AMP_IO        (GPIO_NUM_40)
 
 /* Display */
 #define BSP_LCD_SPI_MOSI      (GPIO_NUM_47)
